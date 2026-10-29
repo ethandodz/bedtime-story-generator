@@ -336,17 +336,24 @@
   function fillVoices() {
     const select = $("voice");
     const previous = select.value;
-    const voices = canSpeak ? speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang)) : [];
+    const voices = canSpeak
+      ? speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang) && !NOVELTY.test(v.name))
+      : [];
     // Natural-sounding voices first, where the device has them.
-    voices.sort((a, b) => score(b) - score(a));
+    voices.sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
     select.replaceChildren(new Option("Default voice", ""));
     for (const v of voices) select.append(new Option(`${v.name} (${v.lang})`, v.name));
     if ([...select.options].some((o) => o.value === previous)) select.value = previous;
     else if (voices.length) select.value = voices[0].name;
   }
+  // Apple devices ship joke voices (Bubbles, Zarvox…) that are no good for bedtime.
+  const NOVELTY = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Junior|Organ|Pipe Organ|Princess|Ralph|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Kathy|Rocko|Shelley|Grandma|Grandpa|Eddy|Flo|Reed|Sandy)\b/i;
+  const GOOD = /samantha|ava|allison|susan|serena|daniel|karen|moira|tessa|kate|siri|google|natural|online|aria|jenny|libby|sonia/i;
   function score(v) {
     const n = v.name.toLowerCase();
-    return (/natural|neural|premium|enhanced|siri/.test(n) ? 2 : 0) + (v.localService ? 0 : 1);
+    return (/premium|enhanced|natural|neural|siri/.test(n) ? 4 : 0)
+      + (GOOD.test(n) ? 2 : 0)
+      + (v.default ? 1 : 0);
   }
 
   if (canSpeak) {
