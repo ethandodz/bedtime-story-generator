@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bedtime Story Maker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>🌙 Bedtime Story Maker</h1>
+      <p>Pick a favourite movie or book and get a gentle bedtime version, read aloud.</p>
+    </header>
+
+    <form id="story-form" class="card">
+      <label>
+        Movie or book
+        <input id="title" list="ideas" placeholder="e.g. Frozen, The Gruffalo, Toy Story" required>
+        <datalist id="ideas">
+          <option value="Frozen"><option value="Toy Story"><option value="Moana">
+          <option value="The Gruffalo"><option value="Winnie-the-Pooh"><option value="Paddington">
+          <option value="The Very Hungry Caterpillar"><option value="Finding Nemo"><option value="Bluey">
+          <option value="Charlotte's Web"><option value="The Wild Robot"><option value="Encanto">
+        </datalist>
+      </label>
+
+      <div class="row">
+        <label>
+          Child's age
+          <select id="age">
+            <option value="2">2</option><option value="3">3</option><option value="4" selected>4</option>
+            <option value="5">5</option><option value="6">6</option><option value="7">7</option>
+            <option value="8">8</option><option value="9">9</option><option value="10">10+</option>
+          </select>
+        </label>
+        <label>
+          Story length
+          <select id="minutes">
+            <option value="3">Short (~3 min)</option>
+            <option value="5" selected>Medium (~5 min)</option>
+            <option value="10">Long (~10 min)</option>
+            <option value="15">Extra long (~15 min)</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        Child's name <span class="optional">(optional — they'll join the story)</span>
+        <input id="child-name" maxlength="40" placeholder="e.g. Mia">
+      </label>
+
+      <button id="generate" type="submit">✨ Make my story</button>
+    </form>
+
+    <section id="result" class="card" hidden>
+      <div class="controls">
+        <button id="play" type="button">▶ Read aloud</button>
+        <button id="stop" type="button" class="secondary" disabled>■ Stop</button>
+        <select id="voice" aria-label="Voice"></select>
+      </div>
+      <audio id="player" controls hidden></audio>
+      <article id="story" aria-live="polite"></article>
+
+      <div id="yoto" class="yoto">
+        <h2>Put it on a Yoto card</h2>
+        <button id="download" type="button">⬇ Download MP3</button>
+        <p id="download-note" class="note"></p>
+        <ol>
+          <li>Download the MP3 above.</li>
+          <li>Open the Yoto app (or my.yotoplay.com) → <b>Library</b> → <b>Make Your Own</b> → create a new playlist.</li>
+          <li>Add the MP3 as a track, give it a title and icon, then save.</li>
+          <li>Tap <b>Link to card</b> and pop a blank Make Your Own card into your Yoto player.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

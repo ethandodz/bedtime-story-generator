@@ -1,0 +1,80 @@
+:root {
+  --bg: #141a33;
+  --card: #1f2748;
+  --text: #f3eedd;
+  --muted: #b5b9d4;
+  --accent: #f6c96b;
+  --accent-text: #2a2140;
+  --border: #33406e;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 20% 0%, #26306a, var(--bg) 60%);
+  background-color: var(--bg);
+  color: var(--text);
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+
+main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+
+header h1 { margin: 0 0 4px; font-size: 2rem; }
+header p { margin: 0 0 24px; color: var(--muted); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+form label { display: block; margin-bottom: 16px; font-weight: 600; }
+.optional { font-weight: 400; color: var(--muted); font-size: 0.9em; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+input, select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #151b38;
+  color: var(--text);
+  font: inherit;
+}
+
+button {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+button:disabled { opacity: 0.5; cursor: default; }
+#generate { width: 100%; padding: 14px; font-size: 1.1rem; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.controls select { width: auto; flex: 1; min-width: 160px; margin-top: 0; }
+audio { width: 100%; margin-top: 14px; }
+
+#story { margin-top: 20px; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; line-height: 1.8; }
+#story h2 { font-size: 1.5rem; margin: 0 0 12px; color: var(--accent); }
+#story p { margin: 0 0 1em; }
+
+.yoto { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.yoto h2 { margin: 0 0 12px; font-size: 1.2rem; }
+.yoto ol { color: var(--muted); padding-left: 20px; }
+.note { color: var(--muted); font-size: 0.9rem; margin: 8px 0; }
+
+@media (max-width: 480px) {
+  .row { grid-template-columns: 1fr; gap: 0; }
+}
