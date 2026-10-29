@@ -1,0 +1,397 @@
+<title>Bedtime Story Maker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grandstander:wght@500;700&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&display=swap">
+<style>
+  /* Layout: one narrow column under a night sky; the form is a small card, the story reads like a book page. */
+  :root {
+    --sky: #10162e;
+    --sky-2: #1b2550;
+    --panel: #1d2650;
+    --line: #34417a;
+    --ink: #f2ecdc;
+    --soft: #aeb4d6;
+    --moon: #f5cf73;
+    --moon-ink: #2a2140;
+    --glow: rgba(245, 207, 115, 0.14);
+    --font-display: "Grandstander", "Trebuchet MS", system-ui, sans-serif;
+    --font-story: "Literata", Georgia, "Times New Roman", serif;
+    --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--sky);
+    background-image: radial-gradient(ellipse at 50% -10%, var(--sky-2), var(--sky) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    font: 16px/1.55 var(--font-ui);
+    min-height: 100vh;
+  }
+  #stars { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 680px; margin: 0 auto;
+    padding-block: 36px 72px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid; gap: 22px;
+  }
+
+  header { display: grid; gap: 6px; }
+  h1 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(1.9rem, 6vw, 2.6rem); line-height: 1.1; margin: 0;
+    text-wrap: balance;
+  }
+  h1 .moon { color: var(--moon); }
+  .lede { margin: 0; color: var(--soft); max-width: 46ch; }
+
+  form {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+    padding: 20px; display: grid; gap: 16px;
+  }
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field > span { font-weight: 600; font-size: 0.95rem; }
+  .field small { color: var(--soft); font-weight: 400; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  input, select {
+    width: 100%; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--sky); color: var(--ink);
+    font: inherit; font-size: 1rem;
+  }
+  input::placeholder { color: #7880a8; }
+  input:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--moon); outline-offset: 2px;
+  }
+
+  .lengths { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lengths label {
+    flex: 1 1 0; min-width: 84px; text-align: center; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 12px; padding: 9px 6px;
+    background: var(--sky); font-size: 0.92rem; line-height: 1.25;
+  }
+  .lengths label b { display: block; font-family: var(--font-display); font-size: 1rem; }
+  .lengths label span { color: var(--soft); font-size: 0.82rem; }
+  .lengths input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .lengths label:has(input:checked) { border-color: var(--moon); background: var(--glow); }
+  .lengths label:has(input:focus-visible) { outline: 2px solid var(--moon); outline-offset: 2px; }
+
+  button {
+    font: inherit; font-weight: 700; cursor: pointer; border: 0; border-radius: 999px;
+    padding: 11px 18px; background: var(--moon); color: var(--moon-ink);
+  }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #go { font-family: var(--font-display); font-size: 1.15rem; padding: 14px; }
+
+  .status { margin: 0; color: var(--soft); min-height: 1.5em; }
+  .status.error { color: #ffb4a8; }
+
+  .story {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+    padding: 22px 22px 26px; display: grid; gap: 14px; min-width: 0;
+  }
+  .tag {
+    justify-self: start; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--moon); border: 1px solid var(--moon); border-radius: 999px; padding: 2px 10px;
+  }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .controls select { flex: 1 1 180px; width: auto; padding: 9px 12px; font-size: 0.9rem; }
+
+  #story-title {
+    font-family: var(--font-display); font-weight: 700; color: var(--moon);
+    font-size: 1.55rem; line-height: 1.2; margin: 4px 0 0; text-wrap: balance;
+  }
+  #story-body { font-family: var(--font-story); font-size: 1.16rem; line-height: 1.85; max-width: 62ch; }
+  #story-body p { margin: 0 0 1em; padding: 2px 6px; margin-inline: -6px; border-radius: 6px; transition: background 0.3s; }
+  #story-body p.reading { background: var(--glow); }
+  .thinking { font-style: italic; color: var(--soft); }
+  .the-end { text-align: center; color: var(--soft); font-family: var(--font-display); margin: 6px 0 0; }
+
+  @media (max-width: 460px) {
+    .row { grid-template-columns: 1fr; }
+    form, .story { padding: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #story-body p { transition: none; }
+  }
+</style>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header>
+    <h1><span class="moon">☾</span> Bedtime Story Maker</h1>
+    <p class="lede">Type a movie or book your child loves. You'll get a gentle bedtime version, and you can have it read aloud.</p>
+  </header>
+
+  <form id="form">
+    <label class="field">
+      <span>Movie or book</span>
+      <input id="title" list="ideas" autocomplete="off" placeholder="Frozen, The Gruffalo, Toy Story…" required>
+      <datalist id="ideas">
+        <option value="Frozen"><option value="Toy Story"><option value="Moana"><option value="Encanto">
+        <option value="The Gruffalo"><option value="Winnie-the-Pooh"><option value="Paddington">
+        <option value="The Very Hungry Caterpillar"><option value="Finding Nemo"><option value="Bluey">
+        <option value="Charlotte's Web"><option value="The Wild Robot"><option value="Where the Wild Things Are">
+      </datalist>
+    </label>
+
+    <div class="row">
+      <label class="field">
+        <span>Child's age</span>
+        <select id="age">
+          <option value="2">2 years</option><option value="3">3 years</option>
+          <option value="4" selected>4 years</option><option value="5">5 years</option>
+          <option value="6">6 years</option><option value="7">7 years</option>
+          <option value="8">8 years</option><option value="9">9 years</option>
+          <option value="10">10 or older</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Child's name <small>(optional)</small></span>
+        <input id="child-name" maxlength="40" autocomplete="off" placeholder="They'll join the story">
+      </label>
+    </div>
+
+    <fieldset class="field" style="border:0;padding:0;margin:0">
+      <span>Story length</span>
+      <div class="lengths">
+        <label><input type="radio" name="len" id="len-3" value="3"><b>Short</b><span>~3 min</span></label>
+        <label><input type="radio" name="len" id="len-5" value="5" checked><b>Medium</b><span>~5 min</span></label>
+        <label><input type="radio" name="len" id="len-10" value="10"><b>Long</b><span>~10 min</span></label>
+        <label><input type="radio" name="len" id="len-15" value="15"><b>Extra long</b><span>~15 min</span></label>
+      </div>
+    </fieldset>
+
+    <button id="go" type="submit">Tell me a story</button>
+    <p id="status" class="status" role="status"></p>
+  </form>
+
+  <article class="story" aria-live="polite">
+    <span id="tag" class="tag">Example story</span>
+    <div class="controls">
+      <button id="read" type="button">▶ Read aloud</button>
+      <button id="stop" type="button" class="ghost" hidden>■ Stop</button>
+      <select id="voice" aria-label="Reading voice"></select>
+    </div>
+    <h2 id="story-title">Pooh and the Very Quiet Night</h2>
+    <div id="story-body">
+      <p>Deep in the Hundred Acre Wood, the sky had turned the soft blue of a blanket, and Winnie-the-Pooh was looking for one last little smackerel of honey.</p>
+      <p>"Just a small one," he said to Piglet, "to help the stars come out." Piglet thought that was a very sensible idea.</p>
+      <p>So they shared the honey on the big log by the stream, and one by one the stars came out to listen. The water whispered, the trees swayed, and Pooh's eyes grew heavy.</p>
+      <p>"Goodnight, Piglet," he yawned. "Goodnight, Pooh," whispered Piglet. And the whole wood was quiet and warm and sleepy.</p>
+    </div>
+    <p class="the-end">The End</p>
+  </article>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const WORDS_PER_MINUTE = 120; // a calm read-aloud pace
+
+  let sample = null;
+  let storyCtl = null;
+  let storyText = "";
+
+  // ---------- stars ----------
+  (function drawStars() {
+    const c = $("stars"), ctx = c.getContext("2d");
+    const paint = () => {
+      const dpr = window.devicePixelRatio || 1;
+      c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+      let seed = 7;
+      const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      for (let i = 0; i < 140; i++) {
+        ctx.globalAlpha = 0.25 + rand() * 0.6;
+        ctx.fillStyle = "#f2ecdc";
+        ctx.beginPath();
+        ctx.arc(rand() * innerWidth, rand() * innerHeight, rand() * 1.3 + 0.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+    paint();
+    addEventListener("resize", paint);
+  })();
+
+  // ---------- story writing ----------
+  function ageGuidance(age) {
+    if (age <= 3) return "Use very short, simple sentences, gentle repetition and sound words, and only a couple of characters.";
+    if (age <= 5) return "Use simple words, short sentences, a clear gentle plot, and a little repetition the child can join in with.";
+    if (age <= 8) return "Use rich but easy vocabulary, a little gentle humour, and a simple adventure with a clear beginning, middle and end.";
+    return "Use more varied vocabulary and a slightly fuller plot, while keeping the tone cosy and calm.";
+  }
+
+  function buildPrompt({ title, age, minutes, name }) {
+    return [
+      "You are a warm, gifted children's storyteller. Write a bedtime story to be read aloud.",
+      "",
+      `The child loves this movie or book: "${title}".`,
+      "Retell it as a bedtime story in your own words. Keep the beloved characters, setting and heart of the story, but never quote or copy the original text or script.",
+      `The child is ${age >= 10 ? "10 or older" : age + " years old"}. ${ageGuidance(age)}`,
+      `Length: about ${minutes * WORDS_PER_MINUTE} words, roughly ${minutes} minutes read aloud slowly. Stay close to this length.`,
+      name ? `Include a child named ${name} as a friendly character who joins the adventure.` : "",
+      "",
+      "Bedtime rules:",
+      "- Soften or leave out anything scary, violent or sad. Villains become silly or misunderstood, or simply aren't there.",
+      "- The pace slows towards the end, and the ending is calm, safe and sleepy.",
+      "- Write for the ear: flowing sentences that sound lovely spoken aloud.",
+      "- No markdown, headings, lists, emoji or stage directions.",
+      "- If you don't know the title, write an original story inspired by it.",
+      "",
+      "Format: the first line is a short story title. Then a blank line. Then the story, in short paragraphs separated by blank lines.",
+    ].filter((l) => l !== null).join("\n");
+  }
+
+  function renderStory(text, done) {
+    const lines = text.replace(/\r/g, "").split("\n");
+    const title = (lines.shift() || "").replace(/^#+\s*|\*+/g, "").trim();
+    const paras = lines.join("\n").split(/\n\s*\n|\n/).map((p) => p.trim()).filter(Boolean);
+    $("story-title").textContent = title || "Your story";
+    const body = $("story-body");
+    body.replaceChildren(...paras.map((p) => {
+      const el = document.createElement("p");
+      el.textContent = p;
+      return el;
+    }));
+    document.querySelector(".the-end").hidden = !done;
+  }
+
+  function setStatus(msg, isError) {
+    $("status").textContent = msg || "";
+    $("status").classList.toggle("error", Boolean(isError));
+  }
+
+  const ERROR_COPY = {
+    not_granted: "Story writing needs permission to use Claude. Reload the page and choose Allow to try again.",
+    sampling_disabled: "Claude isn't available on this account, so stories can't be written here.",
+    rate_limited: "You've hit a usage limit for now. Please try again a little later.",
+    session_expired: "You've been signed out. Sign in to Claude again, then try once more.",
+    refused: "A story couldn't be written for that title. Try a different movie or book.",
+    empty_completion: "No story came back. Try again, or pick a shorter length.",
+  };
+
+  $("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = $("title").value.trim();
+    if (!title) return;
+    sample = sample || (await samplePromise);
+    if (!sample) {
+      setStatus("Story writing only works when this page is opened in Claude.", true);
+      return;
+    }
+    stopReading();
+    storyCtl?.abort();
+    const ctl = (storyCtl = new AbortController());
+
+    const minutes = Number(document.querySelector('input[name="len"]:checked').value);
+    const prompt = buildPrompt({
+      title,
+      age: Number($("age").value),
+      minutes,
+      name: $("child-name").value.trim(),
+    });
+
+    $("go").disabled = true;
+    $("go").textContent = "Writing your story…";
+    $("read").disabled = true;
+    $("tag").textContent = title;
+    $("story-title").textContent = "Once upon a time…";
+    $("story-body").innerHTML = '<p class="thinking">Thinking up a story. This can take up to a minute.</p>';
+    document.querySelector(".the-end").hidden = true;
+    setStatus("");
+    $("story-title").scrollIntoView({ behavior: "smooth", block: "center" });
+
+    try {
+      const { text, truncated } = await sample(prompt, {
+        signal: ctl.signal,
+        cache: false,
+        onText: ({ text }) => renderStory(text, false),
+      });
+      storyText = text;
+      renderStory(text, true);
+      if (truncated) setStatus("The story was cut a little short. Try a shorter length next time.");
+    } catch (err) {
+      if (err.code === "cancelled") return;
+      if (err.text) { storyText = err.text; renderStory(err.text, false); }
+      else if (err.code === "refused") $("story-body").replaceChildren();
+      setStatus(ERROR_COPY[err.code] || "Something went wrong while writing. Please try again.", true);
+    } finally {
+      if (storyCtl === ctl) {
+        $("go").disabled = false;
+        $("go").textContent = "Tell me a story";
+        $("read").disabled = false;
+      }
+    }
+  });
+
+  // ---------- reading aloud ----------
+  const canSpeak = "speechSynthesis" in window;
+
+  function fillVoices() {
+    const select = $("voice");
+    const previous = select.value;
+    const voices = canSpeak ? speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang)) : [];
+    // Natural-sounding voices first, where the device has them.
+    voices.sort((a, b) => score(b) - score(a));
+    select.replaceChildren(new Option("Default voice", ""));
+    for (const v of voices) select.append(new Option(`${v.name} (${v.lang})`, v.name));
+    if ([...select.options].some((o) => o.value === previous)) select.value = previous;
+    else if (voices.length) select.value = voices[0].name;
+  }
+  function score(v) {
+    const n = v.name.toLowerCase();
+    return (/natural|neural|premium|enhanced|siri/.test(n) ? 2 : 0) + (v.localService ? 0 : 1);
+  }
+
+  if (canSpeak) {
+    fillVoices();
+    speechSynthesis.onvoiceschanged = fillVoices;
+  } else {
+    $("read").hidden = true;
+    $("voice").hidden = true;
+  }
+
+  function stopReading() {
+    if (canSpeak) speechSynthesis.cancel();
+    document.querySelectorAll("#story-body p.reading").forEach((p) => p.classList.remove("reading"));
+    $("stop").hidden = true;
+    $("read").hidden = !canSpeak;
+  }
+
+  $("read").addEventListener("click", () => {
+    const paras = [...document.querySelectorAll("#story-body p:not(.thinking)")];
+    if (!paras.length) return;
+    stopReading();
+    const voice = speechSynthesis.getVoices().find((v) => v.name === $("voice").value);
+    const parts = [$("story-title"), ...paras];
+    // One utterance per paragraph: some browsers cut long utterances off, and it lets us highlight.
+    parts.forEach((el, i) => {
+      const u = new SpeechSynthesisUtterance(el.textContent);
+      if (voice) u.voice = voice;
+      u.rate = 0.85;
+      u.pitch = 1.05;
+      u.onstart = () => {
+        document.querySelectorAll("#story-body p.reading").forEach((p) => p.classList.remove("reading"));
+        if (el.tagName === "P") el.classList.add("reading");
+      };
+      if (i === parts.length - 1) u.onend = stopReading;
+      speechSynthesis.speak(u);
+    });
+    $("read").hidden = true;
+    $("stop").hidden = false;
+  });
+  $("stop").addEventListener("click", stopReading);
+
+  // ---------- connect to Claude ----------
+  const samplePromise = Promise.resolve(window.claude?.use?.("sample")).then((s) => s || null, () => null);
+  (async () => {
+    sample = await samplePromise;
+    if (!sample) setStatus("Open this page in Claude to write new stories. The example below can still be read aloud.");
+  })();
+</script>

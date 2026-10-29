@@ -6,7 +6,11 @@ Pick a movie or book your child loves, choose their age and how long the story s
 - **Reading aloud:** the free built-in voice of your phone or computer, or (optional) a more natural storyteller voice via OpenAI text-to-speech.
 - **Yoto:** download the MP3, then add it to a Make Your Own playlist in the Yoto app and link it to a card.
 
-## Run it
+## Free version (runs inside Claude)
+
+`bedtime-page.html` is a no-setup version published as a Claude artifact: https://claude.ai/artifact/MEbKXbgEtx6FjNkskDJ4Y4. Stories are written through the viewer's own Claude account and read aloud with the device's built-in voice, so no API keys are needed. It has no Yoto/MP3 export.
+
+## Run the server version
 
 You need [Node.js](https://nodejs.org) 20 or newer.
 
